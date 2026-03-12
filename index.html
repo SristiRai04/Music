@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Keyboard Orchestra Studio</title>
+
+<style>
+
+body{
+margin:0;
+font-family:Arial;
+background:linear-gradient(135deg,#141e30,#243b55);
+color:white;
+text-align:center;
+}
+
+h1{
+margin-top:20px;
+font-size:40px;
+}
+
+#status{
+margin-top:10px;
+font-size:18px;
+background:#ffffff20;
+display:inline-block;
+padding:8px 20px;
+border-radius:20px;
+}
+
+#currentSound{
+margin-top:8px;
+font-size:16px;
+color:#ddd;
+}
+
+.sound-guide{
+margin-top:25px;
+}
+
+.sound-guide h2{
+font-size:22px;
+margin-bottom:15px;
+}
+
+.guide-grid{
+display:flex;
+justify-content:center;
+flex-wrap:wrap;
+gap:10px;
+}
+
+.guide-box{
+background:#ffffff20;
+padding:10px 15px;
+border-radius:12px;
+font-size:15px;
+transition:0.2s;
+}
+
+.guide-box:hover{
+background:#00ffc344;
+transform:scale(1.05);
+}
+
+.piano{
+display:flex;
+justify-content:center;
+margin-top:40px;
+flex-wrap:wrap;
+}
+
+.white{
+width:70px;
+height:220px;
+background:white;
+border:2px solid #ccc;
+margin:2px;
+border-radius:0 0 10px 10px;
+display:flex;
+justify-content:center;
+align-items:flex-end;
+font-weight:bold;
+cursor:pointer;
+color:black;
+transition:0.1s;
+}
+
+.white:hover{
+background:#f5f5f5;
+}
+
+.white.active{
+background:#00ffc3;
+transform:translateY(4px);
+}
+
+.controls{
+margin-top:30px;
+}
+
+.icon-btn{
+width:65px;
+height:65px;
+margin:10px;
+border:none;
+border-radius:50%;
+font-size:26px;
+cursor:pointer;
+color:white;
+display:inline-flex;
+justify-content:center;
+align-items:center;
+box-shadow:0 5px 15px rgba(0,0,0,0.4);
+transition:0.2s;
+}
+
+.icon-btn:hover{
+transform:scale(1.1);
+}
+
+.start{ background:#2ecc71; }
+.stop{ background:#e74c3c; }
+.replay{ background:#f1c40f; }
+
+#visualizer{
+display:flex;
+justify-content:center;
+align-items:flex-end;
+height:140px;
+margin-top:40px;
+}
+
+.bar{
+width:8px;
+margin:2px;
+background:#00ffc3;
+height:10px;
+border-radius:5px;
+transition:0.1s;
+}
+
+</style>
+</head>
+
+<body>
+
+<h1>🎵 Keyboard Orchestra Studio</h1>
+
+<div id="status">🟢 Ready</div>
+<div id="currentSound">Last Sound: None</div>
+
+<div class="sound-guide">
+
+<h2>🎧 Sound Guide</h2>
+
+<div class="guide-grid">
+
+<div class="guide-box">A 🎹 Piano</div>
+<div class="guide-box">S 🥁 Drum</div>
+<div class="guide-box">D 🎸 Bass</div>
+<div class="guide-box">F 👏 Clap</div>
+<div class="guide-box">G 🔊 Kick</div>
+<div class="guide-box">H 🥁 Snare</div>
+<div class="guide-box">J 🎶 Hi-Hat</div>
+<div class="guide-box">K 💥 Crash</div>
+
+</div>
+
+</div>
+
+<div class="piano">
+
+<div class="white key" data-key="A">A</div>
+<div class="white key" data-key="S">S</div>
+<div class="white key" data-key="D">D</div>
+<div class="white key" data-key="F">F</div>
+<div class="white key" data-key="G">G</div>
+<div class="white key" data-key="H">H</div>
+<div class="white key" data-key="J">J</div>
+<div class="white key" data-key="K">K</div>
+
+</div>
+
+<div class="controls">
+
+<button class="icon-btn start" onclick="startRecording()">▶</button>
+<button class="icon-btn stop" onclick="stopRecording()">⏹</button>
+<button class="icon-btn replay" onclick="replay()">🔁</button>
+
+</div>
+
+<div id="visualizer"></div>
+
+<script>
+
+const sounds={
+A:"https://assets.mixkit.co/active_storage/sfx/212/212-preview.mp3",
+S:"https://assets.mixkit.co/active_storage/sfx/205/205-preview.mp3",
+D:"https://assets.mixkit.co/active_storage/sfx/199/199-preview.mp3",
+F:"https://assets.mixkit.co/active_storage/sfx/201/201-preview.mp3",
+G:"https://assets.mixkit.co/active_storage/sfx/269/269-preview.mp3",
+H:"https://assets.mixkit.co/active_storage/sfx/270/270-preview.mp3",
+J:"https://assets.mixkit.co/active_storage/sfx/218/218-preview.mp3",
+K:"https://assets.mixkit.co/active_storage/sfx/219/219-preview.mp3"
+};
+
+let recording=false;
+let recordData=[];
+let startTime=0;
+
+const status=document.getElementById("status");
+const currentSound=document.getElementById("currentSound");
+
+const visualizer=document.getElementById("visualizer");
+
+for(let i=0;i<40;i++){
+let bar=document.createElement("div");
+bar.className="bar";
+visualizer.appendChild(bar);
+}
+
+const bars=document.querySelectorAll(".bar");
+
+function playSound(key){
+
+if(!sounds[key]) return;
+
+let audio=new Audio(sounds[key]);
+audio.play();
+
+animateKey(key);
+animateVisualizer();
+
+currentSound.innerHTML="Last Sound: "+key;
+
+if(recording){
+recordData.push({
+key:key,
+time:Date.now()-startTime
+});
+}
+
+}
+
+function animateKey(key){
+
+let k=document.querySelector(`[data-key="${key}"]`);
+
+if(!k) return;
+
+k.classList.add("active");
+
+setTimeout(()=>{
+k.classList.remove("active");
+},150);
+
+}
+
+function animateVisualizer(){
+
+bars.forEach(bar=>{
+bar.style.height=Math.random()*120+"px";
+});
+
+}
+
+document.addEventListener("keydown",e=>{
+playSound(e.key.toUpperCase());
+});
+
+document.querySelectorAll(".key").forEach(k=>{
+k.addEventListener("click",()=>{
+playSound(k.dataset.key);
+});
+});
+
+function startRecording(){
+
+recordData=[];
+recording=true;
+startTime=Date.now();
+
+status.innerHTML="🔴 Recording...";
+
+}
+
+function stopRecording(){
+
+recording=false;
+
+status.innerHTML="⏹ Recording Stopped";
+
+}
+
+function replay(){
+
+status.innerHTML="🔁 Replaying Beat";
+
+recordData.forEach(note=>{
+
+setTimeout(()=>{
+playSound(note.key);
+},note.time);
+
+});
+
+}
+
+</script>
+
+</body>
+</html>
+
+
+
