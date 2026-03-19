@@ -1,3 +1,4 @@
+round2-improvements
 # 🎵 Keyboard Orchestra Studio
 
 An in-browser virtual instrument that lets you play, record, and replay beats using your keyboard.
@@ -34,3 +35,8 @@ Open `index.html` in any browser — no install needed.
 - **Replay status reset** — status returns to "🟢 Ready" automatically after replay finishes
 - **Visualizer reset** — bars animate back to baseline height after each keypress instead of staying frozen
 - **Stop feedback** — stop button now shows how many notes were recorded
+=======
+# Music
+Keyboard Orchestra Studio
+Try it live: https://project-j9fsi.vercel.app/
+main
